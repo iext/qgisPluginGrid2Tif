@@ -21,13 +21,18 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QSize
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QAction
+from PyQt5.QtWidgets import QAction, QFileDialog, QWidget
 from qgis.gui import *
 from qgis.core import (
     QgsMapLayerModel,
-    QgsMapLayerProxyModel
+    QgsMapLayerProxyModel,
+    QgsProject,
+    QgsMapSettings,
+    QgsMapRendererJob, 
+    QgsMapSettings,
+    QgsMapRendererSequentialJob
 )
 
 # Initialize Qt resources from file resources.py
@@ -170,7 +175,7 @@ class Grid2Tif:
         icon_path = ':/plugins/export_tif/icon.png'
         self.add_action(
             icon_path,
-            text=self.tr(u''),
+            text=self.tr(u'Tif_MapInfo'),
             callback=self.run,
             parent=self.iface.mainWindow())
 
@@ -184,8 +189,7 @@ class Grid2Tif:
             self.iface.removePluginMenu(
                 self.tr(u'&Grid2Tif'),
                 action)
-            self.iface.removeToolBarIcon(action)
-
+            self.iface.removeToolBarIcon(action)    
 
     def run(self):
         """Run method that performs all the real work"""
@@ -203,14 +207,42 @@ class Grid2Tif:
         self.dlg.mFieldComboBox.setLayer(vlayer)
         self.dlg.mMapLayerComboBox.layerChanged.connect(on_layer_changed)                                      
 
-        # show the dialog
+        def select_output_file():
+            wid = QWidget()
+            folderpath = QFileDialog.getExistingDirectory(wid, "Select folder")            
+            self.dlg.mLineEditPath.setText(folderpath)
+
+        self.dlg.pushButton.clicked.connect(select_output_file)        
+        
         self.dlg.show()                                     
 
         # Run the dialog event loop
         result = self.dlg.exec_()                
 
+        def saveTIFF(box, name, path):            
+            options = QgsMapSettings()
+            layers = QgsProject.instance().mapLayers().values()
+            options.setLayers(layers)
+            options.setBackgroundColor(QColor(255, 255, 255))
+            options.setOutputSize(QSize(5000, 5000))
+            options.setExtent(box)                
+            render = QgsMapRendererSequentialJob(options)        
+            render.start()
+            render.waitForFinished()    
+            img = render.renderedImage()    
+            img.save(path+"/"+name+".tif","tif")   
+               
         # See if OK was pressed
-        if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
+        if result:            
+            currentField=self.dlg.mFieldComboBox.currentField()
+            currentPath=self.dlg.mLineEditPath.text()
+
+            layer = self.dlg.mMapLayerComboBox.currentLayer()
+            selectionObject = layer.getSelectedFeatures()
+            layer.removeSelection()
+            
+            for selObj in selectionObject:    
+                box=selObj.geometry().boundingBox()                
+                saveTIFF(box, selObj[currentField], currentPath)                
+
             pass
