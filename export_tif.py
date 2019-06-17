@@ -22,8 +22,13 @@
  ***************************************************************************/
 """
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QAction
+from qgis.gui import *
+from qgis.core import (
+    QgsMapLayerModel,
+    QgsMapLayerProxyModel
+)
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -191,10 +196,19 @@ class Grid2Tif:
             self.first_start = False
             self.dlg = Grid2TifDialog()
 
+        def on_layer_changed(vlayer):                                    
+            self.dlg.mFieldComboBox.setLayer(vlayer)
+
+        vlayer=self.dlg.mMapLayerComboBox.currentLayer()
+        self.dlg.mFieldComboBox.setLayer(vlayer)
+        self.dlg.mMapLayerComboBox.layerChanged.connect(on_layer_changed)                                      
+
         # show the dialog
-        self.dlg.show()
+        self.dlg.show()                                     
+
         # Run the dialog event loop
-        result = self.dlg.exec_()
+        result = self.dlg.exec_()                
+
         # See if OK was pressed
         if result:
             # Do something useful here - delete the line containing pass and
