@@ -231,7 +231,29 @@ class Grid2Tif:
             render.waitForFinished()    
             img = render.renderedImage()    
             img.save(path+"/"+name+".tif","tif")   
-               
+        
+        def saveMapInfo(box, name, path):
+            xmin = box.xMinimum()
+            xmax = box.xMaximum()
+            ymin = box.yMinimum()
+            ymax = box.yMaximum()
+            textFilePath = path+"/"+name+".tab"
+            f = open( textFilePath, 'wt', encoding='cp1251')
+            line="!table\n"
+            line+="!version 300\n"
+            line+="!charset WindowsCyrillic\n"
+            line+="\n"
+            line+="Definition Table\n"
+            line+="  File \""+name+".tif\"\n" 
+            line+="  Type \"Raster\"\n"
+            line+="  ("+str(xmin)+","+str(ymax)+") (0,0) Label \"L1\",\n"
+            line+="  ("+str(xmin)+","+str(ymin)+") (0,5000) Label \"L2\",\n"
+            line+="  ("+str(xmax)+","+str(ymax)+") (5000,0) Label \"L3\",\n"
+            line+="  ("+str(xmax)+","+str(ymin)+") (5000,5000) Label \"L4\"\n"
+            line+="  CoordSys NonEarth Units \"m\"\n"
+            line+="  Units \"m\""   
+            f.write(line)
+            f.close()
         # See if OK was pressed
         if result:            
             currentField=self.dlg.mFieldComboBox.currentField()
@@ -243,6 +265,9 @@ class Grid2Tif:
             
             for selObj in selectionObject:    
                 box=selObj.geometry().boundingBox()                
-                saveTIFF(box, selObj[currentField], currentPath)                
-
+                saveTIFF(box, selObj[currentField], currentPath)
+                saveMapInfo(box, selObj[currentField], currentPath)            
+                print("create: "+selObj[currentField])
+            
+            print("finished create files tiff+mapinfo")
             pass
