@@ -2,6 +2,8 @@
 
 Save image selected feature grid to tiff
 
+![](https://media.giphy.com/media/JSeOxgPGuVdzyfFF9Q/giphy.gif)
+
 1. Load map layers that you want to export TIFF
 2. Load the grid layer into the map.
 3. Select the desired grid objects.
