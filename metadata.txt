@@ -14,7 +14,7 @@ version=0.1
 author=Milickij Alex
 email=milickij@gmail.com
 
-about=Save image selected feature grid to tiff.
+about=Save image selected feature grid to tiff. This plugin allows you to save the contents of the map for selected grid objects in the tif + mapinfo file. You can use it to create attached images in raster format.
 
 tracker=https://github.com/iext/qgisPluginGrid2Tif/issues
 repository=https://github.com/iext/qgisPluginGrid2Tif.git
