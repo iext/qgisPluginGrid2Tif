@@ -28,7 +28,7 @@ repository=https://github.com/iext/qgisPluginGrid2Tif.git
 # Tags are comma separated with spaces allowed
 tags=vector, topography, tif, tiff, grid
 
-homepage=https://github.com/iext/qgisPluginGrid2Tif/wiki
+homepage=https://github.com/iext/qgisPluginGrid2Tif
 category=Plugins
 icon=icon.png
 # experimental flag
