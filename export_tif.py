@@ -21,16 +21,12 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QSize
-from PyQt5.QtGui import *
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+from PyQt5.QtCore import QSize
+from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QAction, QFileDialog, QWidget
-from qgis.gui import *
 from qgis.core import (
-    QgsMapLayerModel,
-    QgsMapLayerProxyModel,
     QgsProject,
-    QgsMapSettings,
-    QgsMapRendererJob, 
     QgsMapSettings,
     QgsMapRendererSequentialJob
 )
@@ -94,18 +90,9 @@ class Grid2Tif:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('Grid2Tif', message)
 
-
-    def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+    def add_action(self, icon_path, text, callback, enabled_flag=True,
+                   add_to_menu=True, add_to_toolbar=True, status_tip=None,
+                   whats_this=None, parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -182,92 +169,93 @@ class Grid2Tif:
         # will be set False in run()
         self.first_start = True
 
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr(u'&Grid2Tif'),
                 action)
-            self.iface.removeToolBarIcon(action)    
+            self.iface.removeToolBarIcon(action)
 
     def run(self):
         """Run method that performs all the real work"""
 
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start == True:
+        # Create the dialog with elements (after translation)
+        # and keep reference
+        # Only create GUI ONCE in callback, so that it will only load when the
+        # plugin is started
+        if self.first_start:
             self.first_start = False
             self.dlg = Grid2TifDialog()
 
-        def on_layer_changed(vlayer):                                    
+        def on_layer_changed(vlayer):
             self.dlg.mFieldComboBox.setLayer(vlayer)
 
-        vlayer=self.dlg.mMapLayerComboBox.currentLayer()
+        vlayer = self.dlg.mMapLayerComboBox.currentLayer()
         self.dlg.mFieldComboBox.setLayer(vlayer)
-        self.dlg.mMapLayerComboBox.layerChanged.connect(on_layer_changed)                                      
+        self.dlg.mMapLayerComboBox.layerChanged.connect(on_layer_changed)
 
         def select_output_file():
             wid = QWidget()
-            folderpath = QFileDialog.getExistingDirectory(wid, "Select folder")            
+            folderpath = QFileDialog.getExistingDirectory(wid, "Select folder")
             self.dlg.mLineEditPath.setText(folderpath)
 
-        self.dlg.pushButton.clicked.connect(select_output_file)        
-        
-        self.dlg.show()                                     
+        self.dlg.pushButton.clicked.connect(select_output_file)
+
+        self.dlg.show()
 
         # Run the dialog event loop
-        result = self.dlg.exec_()                
+        result = self.dlg.exec_()
 
-        def saveTIFF(box, name, path):            
+        def saveTIFF(box, name, path):
             options = QgsMapSettings()
             layers = QgsProject.instance().mapLayers().values()
             options.setLayers(layers)
             options.setBackgroundColor(QColor(255, 255, 255))
             options.setOutputSize(QSize(5000, 5000))
-            options.setExtent(box)                
-            render = QgsMapRendererSequentialJob(options)        
+            options.setExtent(box)
+            render = QgsMapRendererSequentialJob(options)
             render.start()
-            render.waitForFinished()    
-            img = render.renderedImage()    
-            img.save(path+"/"+name+".tif","tif")   
-        
+            render.waitForFinished()
+            img = render.renderedImage()
+            img.save(path+"/"+name+".tif", "tif")
+
         def saveMapInfo(box, name, path):
             xmin = box.xMinimum()
             xmax = box.xMaximum()
             ymin = box.yMinimum()
             ymax = box.yMaximum()
             textFilePath = path+"/"+name+".tab"
-            f = open( textFilePath, 'wt', encoding='cp1251')
-            line="!table\n"
-            line+="!version 300\n"
-            line+="!charset WindowsCyrillic\n"
-            line+="\n"
-            line+="Definition Table\n"
-            line+="  File \""+name+".tif\"\n" 
-            line+="  Type \"Raster\"\n"
-            line+="  ("+str(xmin)+","+str(ymax)+") (0,0) Label \"L1\",\n"
-            line+="  ("+str(xmin)+","+str(ymin)+") (0,5000) Label \"L2\",\n"
-            line+="  ("+str(xmax)+","+str(ymax)+") (5000,0) Label \"L3\",\n"
-            line+="  ("+str(xmax)+","+str(ymin)+") (5000,5000) Label \"L4\"\n"
-            line+="  CoordSys NonEarth Units \"m\"\n"
-            line+="  Units \"m\""   
+            f = open(textFilePath, 'wt', encoding='cp1251')
+            line = "!table\n"
+            line += "!version 300\n"
+            line += "!charset WindowsCyrillic\n"
+            line += "\n"
+            line += "Definition Table\n"
+            line += "  File \""+name+".tif\"\n"
+            line += "  Type \"Raster\"\n"
+            line += "  ({0},{1}) (0,0) Label \"L1\",\n".format(xmin, ymax)
+            line += "  ({0},{1}) (0,5000) Label \"L2\",\n".format(xmin, ymin)
+            line += "  ({0},{1}) (5000,0) Label \"L3\",\n".format(xmax, ymax)
+            line += "  ({0},{1}) (5000,5000) Label \"L4\"\n".format(xmax, ymin)
+            line += "  CoordSys NonEarth Units \"m\"\n"
+            line += "  Units \"m\""
             f.write(line)
             f.close()
         # See if OK was pressed
-        if result:            
-            currentField=self.dlg.mFieldComboBox.currentField()
-            currentPath=self.dlg.mLineEditPath.text()
+        if result:
+            currentField = self.dlg.mFieldComboBox.currentField()
+            currentPath = self.dlg.mLineEditPath.text()
 
             layer = self.dlg.mMapLayerComboBox.currentLayer()
             selectionObject = layer.getSelectedFeatures()
             layer.removeSelection()
-            
-            for selObj in selectionObject:    
-                box=selObj.geometry().boundingBox()                
+
+            for selObj in selectionObject:
+                box = selObj.geometry().boundingBox()
                 saveTIFF(box, selObj[currentField], currentPath)
-                saveMapInfo(box, selObj[currentField], currentPath)            
+                saveMapInfo(box, selObj[currentField], currentPath)
                 print("create: "+selObj[currentField])
-            
+
             print("finished create files tiff+mapinfo")
             pass
