@@ -218,14 +218,14 @@ class Grid2Tif:
             render.start()
             render.waitForFinished()
             img = render.renderedImage()
-            img.save(path+"/"+name+".tif", "tif")
+            img.save(os.path.join(path, name+".tif"), "tif")
 
         def saveMapInfo(box, name, path):
             xmin = box.xMinimum()
             xmax = box.xMaximum()
             ymin = box.yMinimum()
             ymax = box.yMaximum()
-            textFilePath = path+"/"+name+".tab"
+            textFilePath = os.path.join(path, name+".tab")
             f = open(textFilePath, 'wt', encoding='cp1251')
             line = "!table\n"
             line += "!version 300\n"
